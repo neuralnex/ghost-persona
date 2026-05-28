@@ -1,0 +1,145 @@
+{
+  "name": "ghost-persona",
+  "version": "1.0.0",
+  "description": "Local-first encrypted workspace memory for IDE agents.",
+  "main": "./dist/extension/src/extension.js",
+  "bin": {
+    "ghost": "./dist/bin/ghost.js"
+  },
+  "publisher": "meru",
+  "type": "module",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Programming Languages",
+    "Chat"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:ghostPersona.lockWalletAddress",
+    "onCommand:ghostPersona.connectStoryGlobalWallet",
+    "onCommand:ghostPersona.getContextMarkdown",
+    "onCommand:ghostPersona.getInjectedChatPipeline",
+    "onCommand:ghostPersona.appendDynamicPrompt",
+    "onCommand:ghostPersona.clearSessionLogs"
+  ],
+  "scripts": {
+    "test": "npm run build",
+    "test:injection": "tsx test-injection.ts",
+    "test:offline": "tsx test-offline.ts",
+    "test:pipeline": "tsx test-pipeline.ts",
+    "ghost": "tsx bin/ghost.ts",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neuralnex/remix-button.git"
+  },
+  "keywords": [
+    "ai",
+    "vscode",
+    "story-protocol",
+    "cdr",
+    "workspace-memory",
+    "encrypted-context"
+  ],
+  "author": "meru",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/neuralnex/remix-button/issues"
+  },
+  "homepage": "https://github.com/neuralnex/remix-button#readme",
+  "dependencies": {
+    "@piplabs/cdr-sdk": "^0.2.1",
+    "@story-protocol/core-sdk": "^1.4.4",
+    "commander": "^14.0.3",
+    "dotenv": "^17.4.2",
+    "fs-extra": "^11.3.5",
+    "viem": "^2.51.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^25.9.1",
+    "@types/vscode": "^1.120.0",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
+  },
+  "contributes": {
+    "configuration": {
+      "title": "Ghost Persona",
+      "properties": {
+        "ghostPersona.mockMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run the workspace identity lifecycle offline using mock threshold parameters."
+        },
+        "ghostPersona.walletAddress": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Public EVM wallet address verified through Story Global Wallet or manually associated with this workspace. Private keys are never stored by Ghost Persona."
+        },
+        "ghostPersona.rpcUrl": {
+          "type": "string",
+          "default": "https://aeneid.storyrpc.io",
+          "description": "RPC endpoint used when live CDR mode is enabled."
+        },
+        "ghostPersona.cdrApiUrl": {
+          "type": "string",
+          "default": "",
+          "description": "CDR API endpoint used when live CDR mode is enabled."
+        },
+        "ghostPersona.globalWalletUrl": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "URL of a Story Global Wallet companion app. The app should import `@story-protocol/global-wallet/story`, sign the supplied nonce, and redirect to the supplied callback URI."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "ghostPersona.lockWalletAddress",
+        "title": "Ghost Persona: Lock Wallet Address"
+      },
+      {
+        "command": "ghostPersona.connectStoryGlobalWallet",
+        "title": "Ghost Persona: Connect Story Global Wallet"
+      },
+      {
+        "command": "ghostPersona.getContextMarkdown",
+        "title": "Ghost Persona: Get Context Markdown"
+      },
+      {
+        "command": "ghostPersona.getInjectedChatPipeline",
+        "title": "Ghost Persona: Get Injected Chat Pipeline"
+      },
+      {
+        "command": "ghostPersona.appendDynamicPrompt",
+        "title": "Ghost Persona: Append Dynamic Prompt"
+      },
+      {
+        "command": "ghostPersona.clearSessionLogs",
+        "title": "Ghost Persona: Clear Session Logs"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ghost-persona-sidebar",
+          "title": "Ghost Persona",
+          "icon": "$(shield)"
+        }
+      ]
+    },
+    "views": {
+      "ghost-persona-sidebar": [
+        {
+          "id": "ghostContextView",
+          "name": "Sovereign Context Engine",
+          "icon": "$(lock)"
+        }
+      ]
+    }
+  }
+}
