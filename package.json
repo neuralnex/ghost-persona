@@ -54,6 +54,7 @@
   "dependencies": {
     "@piplabs/cdr-sdk": "^0.2.1",
     "@story-protocol/core-sdk": "^1.4.4",
+    "@story-protocol/global-wallet": "^0.0.3",
     "commander": "^14.0.3",
     "dotenv": "^17.4.2",
     "fs-extra": "^11.3.5",
