@@ -37,12 +37,15 @@ export class GhostSidebarProvider implements vscode.WebviewViewProvider {
 
   public broadcastUpdate() {
     if (this._view && activeContextMemory) {
+      const config = vscode.workspace.getConfiguration('ghostPersona');
+      const savedWallet =config.get<string>('walletAddress', '');
       this._view.webview.postMessage({
         type: 'updateState',
         payload: {
           vaultUuid: activeContextMemory.vaultUuid || 'Local vault pending',
           logs: activeContextMemory.sessionLogs || [],
-          prompts: activeContextMemory.dynamicPrompts || []
+          prompts: activeContextMemory.dynamicPrompts || [],
+          isWalletConnected: savedWallet.length > 0
         }
       });
     }
@@ -173,6 +176,14 @@ export class GhostSidebarProvider implements vscode.WebviewViewProvider {
 
             vault.textContent = message.payload.vaultUuid || 'Locked';
             logs.replaceChildren();
+
+            if (message.payload.isWalletConnected) {
+              authButton.hidden = true;
+              authStatus.hidden = false;
+            } else {
+              authButton.hidden = false;
+              authStatus.hidden = true;
+            }
 
             if (!message.payload.logs || message.payload.logs.length === 0) {
               const empty = document.createElement('div');

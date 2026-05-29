@@ -9,20 +9,34 @@
   "publisher": "meru",
   "type": "module",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.120.0"
   },
+
+  "activationEvents": [
+    "onCommand:ghostPersona.lockWalletAddress",
+    "onCommand:ghostPersona.connectStoryGlobalWallet",
+    "onCommand:ghostPersona.getContextMarkdown",
+    "onCommand:ghostPersona.getInjectedChatPipeline",
+    "onCommand:ghostPersona.appendDynamicPrompt",
+    "onCommand:ghostPersona.clearSessionLogs",
+    "onCommand:ghostPersona.setPrivateKey",
+    "onView:ghostContextView",
+    "onUri"
+  ],
+  
   "categories": [
     "AI",
     "Programming Languages",
     "Chat"
   ],
   "scripts": {
+    "compile": "esbuild ./extension/src/extension.ts --bundle --outfile=dist/extension/src/extension.js --external:vscode --packages=external --format=cjs --platform=node",
+    "build": "tsc && npm run compile",
     "test": "npm run build",
     "test:injection": "tsx test-injection.ts",
     "test:offline": "tsx test-offline.ts",
     "test:pipeline": "tsx test-pipeline.ts",
-    "ghost": "tsx bin/ghost.ts",
-    "build": "tsc"
+    "ghost": "tsx bin/ghost.ts"
   },
   "repository": {
     "type": "git",
@@ -56,6 +70,7 @@
     "@types/node": "^25.9.1",
     "@types/vscode": "^1.120.0",
     "@vscode/vsce": "^3.9.1",
+    "esbuild": "^0.28.0",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3"
   },
