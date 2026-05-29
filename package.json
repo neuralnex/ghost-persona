@@ -55,6 +55,7 @@
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^25.9.1",
     "@types/vscode": "^1.120.0",
+    "@vscode/vsce": "^3.9.1",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3"
   },
