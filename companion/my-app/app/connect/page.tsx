@@ -1,18 +1,16 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createWalletClient, custom } from 'viem';
 import { mainnet } from 'viem/chains';
-// Automatic global wallet injection import from Story SDK
 import "@story-protocol/global-wallet/story";
 
 type AuthState = 'idle' | 'connecting' | 'connected' | 'signing' | 'redirecting' | 'error';
 
-export default function StoryGlobalWalletBridge() {
+function StoryGlobalWalletBridgeContent() {
     const searchParams = useSearchParams();
 
-    // Handshake parameters sent from VS Code Extension
     const nonce = searchParams.get('nonce');
     const callbackUri = searchParams.get('callbackUri');
     const workspace = searchParams.get('workspace') || 'Unknown Workspace';
@@ -22,14 +20,12 @@ export default function StoryGlobalWalletBridge() {
     const [errorMessage, setErrorMessage] = useState<string>('');
 
     useEffect(() => {
-        // Validate that the request originated with correct state
         if (!nonce || !callbackUri) {
             setState('error');
             setErrorMessage('Missing authentication parameters. Make sure to open this page directly from your VS Code editor.');
         }
     }, [nonce, callbackUri]);
 
-    // Standard web3 connection handling that binds automatically
     const handleConnectAndSign = async () => {
         if (!nonce || !callbackUri) return;
 
@@ -37,13 +33,11 @@ export default function StoryGlobalWalletBridge() {
         setErrorMessage('');
 
         try {
-            // 1. Establish web3 provider context. Story Global Wallet injects an EIP-1193 provider window object
             const ethereum = (window as any).ethereum;
             if (!ethereum) {
                 throw new Error('No web3 provider detected. Make sure the Story Global Wallet agent is active.');
             }
 
-            // 2. Request connection and query accounts
             const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
             if (!accounts || accounts.length === 0) {
                 throw new Error('No accounts authorized. Wallet connection rejected.');
@@ -53,13 +47,11 @@ export default function StoryGlobalWalletBridge() {
             setWalletAddress(activeAddress);
             setState('signing');
 
-            // 3. Bind client using standard Viem wrappers
             const walletClient = createWalletClient({
                 chain: mainnet,
                 transport: custom(ethereum)
             });
 
-            // 4. Request cryptographic sign of the extension nonce
             const signatureMessage = `Ghost Persona Security Authentication Nonce: ${nonce}`;
             const signature = await walletClient.signMessage({
                 account: activeAddress,
@@ -68,14 +60,12 @@ export default function StoryGlobalWalletBridge() {
 
             setState('redirecting');
 
-            // 5. Build dynamic callback parameters
             const responseParams = new URLSearchParams({
                 address: activeAddress,
                 message: signatureMessage,
                 signature: signature
             });
 
-            // 6. Direct browser window scheme back to VS Code Local Handler
             const finalRedirectUrl = `${callbackUri}?${responseParams.toString()}`;
 
             setTimeout(() => {
@@ -159,4 +149,22 @@ export default function StoryGlobalWalletBridge() {
             </div>
         </div>
     );
+}
+
+export default function StoryGlobalWalletBridge() {
+  return (
+    <Suspense fallback={
+      <div className="container">
+        <div className="card">
+          <div className="logo-container">
+            <span className="logo-icon">🛡️</span>
+          </div>
+          <h1>Initializing Security Gateway...</h1>
+          <div className="spinner" style={{ margin: '24px auto' }}></div>
+        </div>
+      </div>
+    }>
+      <StoryGlobalWalletBridgeContent />
+    </Suspense>
+  );
 }
