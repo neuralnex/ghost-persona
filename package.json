@@ -16,15 +16,6 @@
     "Programming Languages",
     "Chat"
   ],
-  "activationEvents": [
-    "onStartupFinished",
-    "onCommand:ghostPersona.lockWalletAddress",
-    "onCommand:ghostPersona.connectStoryGlobalWallet",
-    "onCommand:ghostPersona.getContextMarkdown",
-    "onCommand:ghostPersona.getInjectedChatPipeline",
-    "onCommand:ghostPersona.appendDynamicPrompt",
-    "onCommand:ghostPersona.clearSessionLogs"
-  ],
   "scripts": {
     "test": "npm run build",
     "test:injection": "tsx test-injection.ts",
@@ -35,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/neuralnex/remix-button.git"
+    "url": "git+https://github.com/neuralnex/ghost-persona.git"
   },
   "keywords": [
     "ai",
@@ -48,9 +39,9 @@
   "author": "meru",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/neuralnex/remix-button/issues"
+    "url": "https://github.com/neuralnex/ghost-persona/issues"
   },
-  "homepage": "https://github.com/neuralnex/remix-button#readme",
+  "homepage": "https://github.com/neuralnex/ghost-persona#readme",
   "dependencies": {
     "@piplabs/cdr-sdk": "^0.2.1",
     "@story-protocol/core-sdk": "^1.4.4",
