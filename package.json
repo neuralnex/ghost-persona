@@ -79,13 +79,18 @@
         },
         "ghostPersona.cdrApiUrl": {
           "type": "string",
-          "default": "",
+          "default": "https://staging-api.storyprotocol.net/api/v4",
           "description": "CDR API endpoint used when live CDR mode is enabled."
         },
         "ghostPersona.globalWalletUrl": {
           "type": "string",
-          "default": "",
+          "default": "https://companion-seven.vercel.app",
           "markdownDescription": "URL of a Story Global Wallet companion app. The app should import `@story-protocol/global-wallet/story`, sign the supplied nonce, and redirect to the supplied callback URI."
+        },
+        "ghostPersona.watcherDebounce": {
+          "type": "number",
+          "default": 3000,
+          "description": "The debounce period in milliseconds before changes are securely synchronized to the workspace vault."
         }
       }
     },
@@ -113,6 +118,10 @@
       {
         "command": "ghostPersona.clearSessionLogs",
         "title": "Ghost Persona: Clear Session Logs"
+      },
+      {
+        "command": "ghostPersona.setPrivateKey",
+        "title": "Ghost Persona: Set Transaction Signing Private Key"
       }
     ],
     "viewsContainers": {

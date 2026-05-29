@@ -12,7 +12,8 @@ export class GhostWorkspaceWatcher {
 
   constructor(
     private workspaceRoot: string,
-    private orchestrator: WorkspaceOrchestrator
+    private orchestrator: WorkspaceOrchestrator,
+    private debounceMs: number = 3000
   ) {}
 
   async start(initialContextMemory: any): Promise<void> {
@@ -72,7 +73,7 @@ export class GhostWorkspaceWatcher {
       } catch (error) {
         console.error('[Watcher Flush] Auto-backup routine failed:', error);
       }
-    }, 3000);
+    }, this.debounceMs);
   }
 
   stop(): void {

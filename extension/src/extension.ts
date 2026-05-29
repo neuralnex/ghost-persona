@@ -30,12 +30,15 @@ export async function activate(context: vscode.ExtensionContext) {
   try {
     let ghostClient: GhostCDRClient | null = null;
     if (!isMockMode) {
-      const privateKey = process.env.GHOST_SOFTWARE_PRIVATE_KEY as `0x${string}` | undefined;
+      let privateKey = await context.secrets.get('GHOST_SOFTWARE_PRIVATE_KEY') as `0x${string}` | undefined;
+      if (!privateKey) {
+        privateKey = process.env.GHOST_SOFTWARE_PRIVATE_KEY as `0x${string}` | undefined;
+      }
       const rpcUrl = config.get<string>('rpcUrl');
       const apiUrl = config.get<string>('cdrApiUrl') || process.env.STORY_CDR_API_URL;
 
       if (!privateKey) {
-        throw new Error("Live CDR mode requires GHOST_SOFTWARE_PRIVATE_KEY.");
+        throw new Error("Live CDR mode requires setting a transaction signing private key via command 'Ghost Persona: Set Transaction Signing Private Key' or setting GHOST_SOFTWARE_PRIVATE_KEY in your environment.");
       }
 
       ghostClient = new GhostCDRClient({ privateKey, rpcUrl, apiUrl });
@@ -54,7 +57,8 @@ export async function activate(context: vscode.ExtensionContext) {
       )
     );
 
-    watcherInstance = new GhostWorkspaceWatcher(workspaceRoot, orchestratorInstance);
+    const debounceMs = config.get<number>('watcherDebounce', 3000);
+    watcherInstance = new GhostWorkspaceWatcher(workspaceRoot, orchestratorInstance, debounceMs);
 
     watcherInstance.onFlushSuccess = () => {
       sidebarProvider.broadcastUpdate();
@@ -164,7 +168,36 @@ export async function activate(context: vscode.ExtensionContext) {
       }
     });
 
-    context.subscriptions.push(injectCommand, contextCommand, appendPromptCommand, clearLogsCommand, lockIdentityCommand, connectStoryWalletCommand, uriHandler);
+    const setPrivateKeyCommand = vscode.commands.registerCommand('ghostPersona.setPrivateKey', async () => {
+      const privateKey = await vscode.window.showInputBox({
+        title: 'Set Transaction Signing Private Key',
+        prompt: 'Enter your Story Protocol testnet wallet private key (starts with 0x). Keys are stored securely in your OS keychain.',
+        ignoreFocusOut: true,
+        password: true,
+        validateInput: value => {
+          if (!value || !value.startsWith('0x') || value.length !== 66) {
+            return 'A valid 32-byte hexadecimal private key starting with 0x is required.';
+          }
+          return undefined;
+        }
+      });
+
+      if (!privateKey) return;
+
+      await context.secrets.store('GHOST_SOFTWARE_PRIVATE_KEY', privateKey);
+      vscode.window.showInformationMessage('Story private key stored securely. Please reload VS Code to activate.');
+    });
+
+    context.subscriptions.push(
+      injectCommand,
+      contextCommand,
+      appendPromptCommand,
+      clearLogsCommand,
+      lockIdentityCommand,
+      connectStoryWalletCommand,
+      setPrivateKeyCommand,
+      uriHandler
+    );
     vscode.window.showInformationMessage('Ghost Persona Sovereign Context Guard Active');
 
   } catch (error: any) {

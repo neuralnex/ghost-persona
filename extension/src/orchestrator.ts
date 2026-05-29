@@ -91,10 +91,9 @@ export class WorkspaceOrchestrator {
       mockMasterKey: this.mockMode ? meta.mockMasterKey ?? Buffer.from(this.activeMasterKey).toString('hex') : undefined
     });
 
-    if (!this.mockMode) {
-      const vaultManager = new PrivateWorkspaceManager(this.ghostClient);
-      await vaultManager.synchronizeMasterKey(meta.vaultUuid, this.activeMasterKey);
-    }
+    // The master key is synchronized to the on-chain vault once during initial checkIn.
+    // Subsequent checkOut passes only update the local encrypted context payload on disk,
+    // avoiding redundant blockchain writes and eliminating transaction latency/gas fees.
 
     console.log(`[Orchestrator] Session files securely stored on disk.`);
   }
