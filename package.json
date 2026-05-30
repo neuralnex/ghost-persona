@@ -1,6 +1,6 @@
 {
   "name": "ghost-persona",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Local-first encrypted workspace memory for IDE agents.",
   "main": "./dist/extension/src/extension.js",
   "bin": {
@@ -11,7 +11,6 @@
   "engines": {
     "vscode": "^1.120.0"
   },
-
   "activationEvents": [
     "onCommand:ghostPersona.lockWalletAddress",
     "onCommand:ghostPersona.connectStoryGlobalWallet",
@@ -23,7 +22,6 @@
     "onView:ghostContextView",
     "onUri"
   ],
-  
   "categories": [
     "AI",
     "Programming Languages",
@@ -100,7 +98,7 @@
         },
         "ghostPersona.globalWalletUrl": {
           "type": "string",
-          "default": "https://companion-seven.vercel.app",
+          "default": "https://companion-seven.vercel.app/connect",
           "markdownDescription": "URL of a Story Global Wallet companion app. The app should import `@story-protocol/global-wallet/story`, sign the supplied nonce, and redirect to the supplied callback URI."
         },
         "ghostPersona.watcherDebounce": {
