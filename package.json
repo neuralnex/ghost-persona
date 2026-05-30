@@ -1,6 +1,6 @@
 {
   "name": "ghost-persona",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Local-first encrypted workspace memory for IDE agents.",
   "main": "./dist/extension/src/extension.js",
   "bin": {
@@ -30,7 +30,7 @@
     "Chat"
   ],
   "scripts": {
-    "compile": "esbuild ./extension/src/extension.ts --bundle --outfile=dist/extension/src/extension.js --external:vscode --packages=external --format=cjs --platform=node",
+    "compile": "esbuild ./extension/src/extension.ts --bundle --outfile=dist/extension/src/extension.js --external:vscode --packages=external --format=esm --platform=node",
     "build": "tsc && npm run compile",
     "test": "npm run build",
     "test:injection": "tsx test-injection.ts",
@@ -154,6 +154,7 @@
         {
           "id": "ghostContextView",
           "name": "Sovereign Context Engine",
+          "type": "webview",
           "icon": "$(lock)"
         }
       ]
