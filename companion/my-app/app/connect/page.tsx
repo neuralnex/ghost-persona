@@ -66,7 +66,8 @@ function StoryGlobalWalletBridgeContent() {
                 signature: signature
             });
 
-            const finalRedirectUrl = `${callbackUri}?${responseParams.toString()}`;
+            const separator = callbackUri.includes('?') ? '&' : '?';
+            const finalRedirectUrl = `${callbackUri}${separator}${responseParams.toString()}`;
 
             setTimeout(() => {
                 window.location.href = finalRedirectUrl;
