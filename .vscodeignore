@@ -4,7 +4,6 @@
 .gitignore
 .ghost/**
 .vscode/**
-node_modules/**
 companion/**
 test-*.ts
 extension/**
