@@ -11,9 +11,13 @@ type AuthState = 'idle' | 'connecting' | 'connected' | 'signing' | 'redirecting'
 function StoryGlobalWalletBridgeContent() {
     const searchParams = useSearchParams();
 
-    const nonce = searchParams.get('nonce');
-    const callbackUri = searchParams.get('callbackUri');
-    const workspace = searchParams.get('workspace') || 'Unknown Workspace';
+    const rawNonce = searchParams.get('nonce');
+    const rawCallbackUri = searchParams.get('callbackUri');
+    const rawWorkspace = searchParams.get('workspace');
+
+    const nonce = rawNonce ? decodeURIComponent(rawNonce) : null;
+    const callbackUri = rawCallbackUri ? decodeURIComponent(rawCallbackUri) : null;
+    const workspace = rawWorkspace ? decodeURIComponent(rawWorkspace) : 'Unknown Workspace';
 
     const [state, setState] = useState<AuthState>('idle');
     const [walletAddress, setWalletAddress] = useState<string>('');
@@ -66,8 +70,9 @@ function StoryGlobalWalletBridgeContent() {
                 signature: signature
             });
 
-            const separator = callbackUri.includes('?') ? '&' : '?';
-            const finalRedirectUrl = `${callbackUri}${separator}${responseParams.toString()}`;
+            const cleanCallbackUri = decodeURIComponent(callbackUri);
+            const separator = cleanCallbackUri.includes('?') ? '&' : '?';
+            const finalRedirectUrl = `${cleanCallbackUri}${separator}${responseParams.toString()}`;
 
             setTimeout(() => {
                 window.location.href = finalRedirectUrl;
