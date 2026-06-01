@@ -69,18 +69,13 @@ The extension verifies the signature with `viem.verifyMessage` and stores only t
 
 Private keys are not stored by Ghost Persona.
 
-## Development Signer
+## Wallet-Paid Transactions
 
-Live CDR writes and reads still need a transaction signer in the current CLI and extension backend path.
+CDR vault allocation, encrypted key writes, and recovery reads are fee-bearing transactions. In production, those transactions are signed by the connected Story Global Wallet through the companion app.
 
-For testnet development, provide:
+The extension creates the CDR request locally, opens the companion with an encoded transaction payload, waits for the wallet signature, and receives the resulting transaction hash through the VS Code URI callback.
 
-```sh
-GHOST_SOFTWARE_PRIVATE_KEY=0x...
-STORY_CDR_API_URL=https://<cdr-api>
-```
-
-This path is for development and controlled testnet operations. Production user onboarding should rely on the Story Global Wallet companion flow.
+There is no `GHOST_SOFTWARE_PRIVATE_KEY` runtime path in the production extension.
 
 ## Relevant Files
 

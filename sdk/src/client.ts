@@ -1,16 +1,16 @@
 import { CDRClient, initWasm } from "@piplabs/cdr-sdk";
-import { createPublicClient, createWalletClient, http } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import { createPublicClient, http, type WalletClient } from "viem";
 
 export interface GhostClientConfig {
-  privateKey: `0x${string}`;
+  walletAddress: `0x${string}`;
+  walletClient: WalletClient | any;
   rpcUrl?: string;
   apiUrl?: string;
 }
 
 export class GhostCDRClient {
   public client!: CDRClient;
-  public account;
+  public account: { address: `0x${string}` };
   public rpcUrl: string;
   public apiUrl: string;
   private isInitialized = false;
@@ -23,21 +23,16 @@ export class GhostCDRClient {
       throw new Error("STORY_CDR_API_URL or GhostClientConfig.apiUrl is required.");
     }
 
-    this.account = privateKeyToAccount(config.privateKey);
+    this.account = { address: config.walletAddress };
 
     const publicClient = createPublicClient({
-      transport: http(this.rpcUrl),
-    });
-
-    const walletClient = createWalletClient({
-      account: this.account,
       transport: http(this.rpcUrl),
     });
 
     this.client = new CDRClient({
       network: "testnet",
       publicClient,
-      walletClient,
+      walletClient: config.walletClient,
       apiUrl: this.apiUrl,
     });
   }

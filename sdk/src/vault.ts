@@ -10,7 +10,7 @@ export class PrivateWorkspaceManager {
     this.walletAddress = ghostClient.account.address;
   }
 
-  async provisionWorkspaceVault(): Promise<string> {
+  async provisionWorkspaceVault(): Promise<number> {
     const { uploader } = this.client;
 
     console.log(`[Story CDR] Allocating new vault mapped to owner: ${this.walletAddress}...`);
@@ -28,13 +28,14 @@ export class PrivateWorkspaceManager {
     return uuid;
   }
 
-  async synchronizeMasterKey(uuid: string, localMasterKey: Uint8Array): Promise<string> {
+  async synchronizeMasterKey(uuid: string | number, localMasterKey: Uint8Array): Promise<string> {
     const { uploader, observer } = this.client;
 
     console.log(`[Story CDR] Generating TDH2 threshold wrapper parameters...`);
 
     const globalPubKey = await observer.getGlobalPubKey();
-    const label = uuidToLabel(Number(uuid));
+    const numericUuid = Number(uuid);
+    const label = uuidToLabel(numericUuid);
 
     const ciphertext = await uploader.encryptDataKey({
       dataKey: localMasterKey,
@@ -46,7 +47,7 @@ export class PrivateWorkspaceManager {
     console.log(`[Story CDR] Committing threshold package to vault (Paying fee: ${writeFee} wei)...`);
 
     const { txHash } = await uploader.write({
-      uuid,
+      uuid: numericUuid,
       accessAuxData: "0x",
       encryptedData: toHex(ciphertext.raw),
       value: writeFee

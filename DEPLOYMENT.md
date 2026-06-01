@@ -7,7 +7,7 @@ This guide covers local validation, Story Global Wallet setup, CDR testnet valid
 - Node.js 20 or newer.
 - npm 10 or newer.
 - VS Code 1.85 or newer.
-- A funded Story Aeneid testnet signer for live CDR validation.
+- A funded Story Global Wallet account for CDR validation.
 - A deployed Story Global Wallet companion app.
 
 ## 2. Configure Environment
@@ -18,12 +18,11 @@ Create a local `.env` file from the template:
 cp .env.example .env
 ```
 
-Set these values for live CDR testing:
+Set these values for production CDR testing:
 
 ```sh
 STORY_RPC_URL=https://aeneid.storyrpc.io
 STORY_CDR_API_URL=https://<cdr-api>
-GHOST_SOFTWARE_PRIVATE_KEY=0x...
 ```
 
 Do not commit `.env`.
@@ -67,6 +66,11 @@ After the user connects with Story Global Wallet, ask the wallet to sign a messa
 - `message`
 - `signature`
 
+The same companion app must support `mode=transaction`. In that mode, decode the supplied `tx` payload, submit the requested contract write through Story Global Wallet, and redirect back with:
+
+- `txId`
+- `txHash`
+
 Configure the extension setting:
 
 ```json
@@ -99,45 +103,19 @@ In the Extension Development Host:
 6. Wait for the watcher debounce window.
 7. Confirm the sidebar shows a new file mutation log.
 
-## 6. Local Mock Watcher Test
+## 6. Production CDR Wallet Test
 
-Run:
+In the Extension Development Host:
 
-```sh
-npm run ghost -- watch --mock
-```
+1. Connect Story Global Wallet.
+2. Sign the authentication nonce.
+3. Approve the CDR vault allocation transaction.
+4. Approve the CDR encrypted key write transaction.
+5. Confirm `.ghost/config.json` and `.ghost/context.bin.enc` exist.
+6. Reload the Extension Development Host and approve the CDR recovery read transaction.
+7. Confirm the local encrypted context decrypts successfully.
 
-Edit a file in the workspace and wait for the watcher flush. Confirm:
-
-- `.ghost/config.json` exists.
-- `.ghost/context.bin.enc` exists.
-- No plaintext session state is written outside the runtime.
-
-## 7. Live CDR Pipeline Test
-
-Set the live environment:
-
-```sh
-STORY_RPC_URL=https://aeneid.storyrpc.io
-STORY_CDR_API_URL=https://<cdr-api>
-GHOST_SOFTWARE_PRIVATE_KEY=0x...
-```
-
-Run:
-
-```sh
-npx tsx test-pipeline.ts
-```
-
-Expected result:
-
-- WASM primitives initialize.
-- A CDR vault is allocated.
-- The AES master key is threshold-wrapped and written.
-- The key is recovered through CDR.
-- The local encrypted context decrypts successfully.
-
-## 8. Chat Router E2E Test
+## 7. Chat Router E2E Test
 
 Run:
 
@@ -156,7 +134,7 @@ IDE agents can call:
 - `ghostPersona.getInjectedChatPipeline`
 - `ghostPersona.getContextMarkdown`
 
-## 9. Packaging for VS Code Marketplace
+## 8. Packaging for VS Code Marketplace
 
 Install the VS Code packaging tool:
 
@@ -184,13 +162,13 @@ Publish after authenticating with the Marketplace publisher account:
 npx vsce publish
 ```
 
-## 10. Production Readiness Checklist
+## 9. Production Readiness Checklist
 
 - Build passes with `npm run build`.
 - Extension launches in Extension Development Host.
 - Story Global Wallet callback verifies a signed nonce.
+- CDR transactions are signed and paid by the connected wallet through the companion app.
 - `.ghost/identity.json` stores only the public wallet address.
 - Local context remains encrypted in `.ghost/context.bin.enc`.
-- Live CDR pipeline passes against the intended testnet.
 - Chat-router commands return usable context.
 - Marketplace package contains no secrets or local vault state.

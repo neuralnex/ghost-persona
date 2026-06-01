@@ -10,9 +10,5 @@ extension/**
 sdk/**
 bin/**
 tsconfig.json
-README.md
-CDR.md
-DEPLOYMENT.md
-HOSTING_AND_ROADMAP.md
 package-lock.json
-LICENSE
+HOSTING_AND_ROADMAP.md

@@ -5,7 +5,6 @@ export interface LocalMetadata {
   vaultUuid: string;
   iv: string;
   tag: string;
-  mockMasterKey?: string;
 }
 
 export class GhostStorageManager {

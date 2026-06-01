@@ -2,7 +2,6 @@ import { GhostStorageManager } from '../../sdk/src/storage.js';
 import { GhostCryptoEngine } from '../../sdk/src/crypto.js';
 import { PrivateWorkspaceManager } from '../../sdk/src/vault.js';
 import { WorkspaceRecoveryManager } from '../../sdk/src/recovery.js';
-import * as crypto from 'crypto';
 
 export class WorkspaceOrchestrator {
   private storage: GhostStorageManager;
@@ -11,8 +10,7 @@ export class WorkspaceOrchestrator {
 
   constructor(
     private workspaceRoot: string,
-    private ghostClient: any,
-    private mockMode: boolean = false
+    private ghostClient: any
   ) {
     this.storage = new GhostStorageManager(workspaceRoot);
     this.storage.ensureGhostStructure();
@@ -28,49 +26,39 @@ export class WorkspaceOrchestrator {
       this.activeMasterKey = GhostCryptoEngine.generateMasterKey();
       this.activeDecryptedContext = JSON.stringify({ sessionLogs: [], dynamicPrompts: [] });
 
-      let uuid = `LOCAL-${crypto.randomUUID()}`;
-      
-      if (!this.mockMode) {
-        const vaultManager = new PrivateWorkspaceManager(this.ghostClient);
-        uuid = await vaultManager.provisionWorkspaceVault();
-        await vaultManager.synchronizeMasterKey(uuid, this.activeMasterKey);
-      } else {
-        console.log(`[Mock Mode] Bypassing on-chain deployment. Assigned Virtual UUID: ${uuid}`);
+      if (!this.ghostClient) {
+        throw new Error('A verified Story Global Wallet is required before creating a production CDR vault.');
       }
+
+      const vaultManager = new PrivateWorkspaceManager(this.ghostClient);
+      const uuid = await vaultManager.provisionWorkspaceVault();
+      await vaultManager.synchronizeMasterKey(uuid, this.activeMasterKey);
 
       const pack = GhostCryptoEngine.encryptContext(this.activeDecryptedContext, this.activeMasterKey);
       this.storage.saveEncryptedContainer(pack.ciphertext);
       this.storage.saveMetadata({
-        vaultUuid: uuid,
+        vaultUuid: String(uuid),
         iv: pack.iv,
-        tag: pack.tag,
-        mockMasterKey: this.mockMode ? Buffer.from(this.activeMasterKey).toString('hex') : undefined
+        tag: pack.tag
       });
       
-      return JSON.parse(this.activeDecryptedContext);
+      return { ...JSON.parse(this.activeDecryptedContext), vaultUuid: String(uuid) };
     }
 
     console.log(`[Orchestrator] Mapped existing Vault Connection: ${meta.vaultUuid}`);
-    
-    if (this.mockMode) {
-      console.log(`[Mock Mode] Simulating decentralized threshold key recovery...`);
-      if (!meta.mockMasterKey) {
-        throw new Error("Mock workspace metadata is missing its local recovery key. Remove .ghost to create a fresh mock vault, or run with live CDR recovery enabled.");
-      }
-      this.activeMasterKey = Buffer.from(meta.mockMasterKey, 'hex');
-      if (this.activeMasterKey.byteLength !== 32) {
-        throw new Error("Mock workspace metadata contains an invalid AES-256 recovery key.");
-      }
-    } else {
-      const recoveryManager = new WorkspaceRecoveryManager(this.ghostClient);
-      this.activeMasterKey = await recoveryManager.recoverMasterKey(meta.vaultUuid);
+
+    if (!this.ghostClient) {
+      throw new Error('A verified Story Global Wallet is required before recovering this production CDR vault.');
     }
+
+    const recoveryManager = new WorkspaceRecoveryManager(this.ghostClient);
+    this.activeMasterKey = await recoveryManager.recoverMasterKey(meta.vaultUuid);
 
     const ciphertext = this.storage.readEncryptedContainer();
     this.activeDecryptedContext = GhostCryptoEngine.decryptContext(ciphertext, meta.iv, meta.tag, this.activeMasterKey);
     
     console.log(`[Orchestrator] Workspace Context successfully populated into volatile system variables.`);
-    return JSON.parse(this.activeDecryptedContext);
+    return { ...JSON.parse(this.activeDecryptedContext), vaultUuid: meta.vaultUuid };
   }
 
   async checkOut(updatedContextObj: any): Promise<void> {
@@ -87,8 +75,7 @@ export class WorkspaceOrchestrator {
     this.storage.saveMetadata({
       vaultUuid: meta.vaultUuid,
       iv: pack.iv,
-      tag: pack.tag,
-      mockMasterKey: this.mockMode ? meta.mockMasterKey ?? Buffer.from(this.activeMasterKey).toString('hex') : undefined
+      tag: pack.tag
     });
 
     // The master key is synchronized to the on-chain vault once during initial checkIn.

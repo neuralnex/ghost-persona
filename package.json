@@ -12,13 +12,12 @@
     "vscode": "^1.120.0"
   },
   "activationEvents": [
-    "onCommand:ghostPersona.lockWalletAddress",
     "onCommand:ghostPersona.connectStoryGlobalWallet",
+    "onCommand:ghostPersona.lockIntoVault",
     "onCommand:ghostPersona.getContextMarkdown",
     "onCommand:ghostPersona.getInjectedChatPipeline",
     "onCommand:ghostPersona.appendDynamicPrompt",
     "onCommand:ghostPersona.clearSessionLogs",
-    "onCommand:ghostPersona.setPrivateKey",
     "onView:ghostContextView",
     "onUri"
   ],
@@ -32,8 +31,7 @@
     "build": "tsc && npm run compile",
     "test": "npm run build",
     "test:injection": "tsx test-injection.ts",
-    "test:offline": "tsx test-offline.ts",
-    "test:pipeline": "tsx test-pipeline.ts",
+    "test:production": "npm run build",
     "ghost": "tsx bin/ghost.ts"
   },
   "repository": {
@@ -76,15 +74,10 @@
     "configuration": {
       "title": "Ghost Persona",
       "properties": {
-        "ghostPersona.mockMode": {
-          "type": "boolean",
-          "default": true,
-          "description": "Run the workspace identity lifecycle offline using mock threshold parameters."
-        },
         "ghostPersona.walletAddress": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Public EVM wallet address verified through Story Global Wallet or manually associated with this workspace. Private keys are never stored by Ghost Persona."
+          "markdownDescription": "Public EVM wallet address verified through Story Global Wallet for this workspace. Private keys are never stored by Ghost Persona."
         },
         "ghostPersona.rpcUrl": {
           "type": "string",
@@ -103,19 +96,19 @@
         },
         "ghostPersona.watcherDebounce": {
           "type": "number",
-          "default": 3000,
+          "default": 300000,
           "description": "The debounce period in milliseconds before changes are securely synchronized to the workspace vault."
         }
       }
     },
     "commands": [
       {
-        "command": "ghostPersona.lockWalletAddress",
-        "title": "Ghost Persona: Lock Wallet Address"
-      },
-      {
         "command": "ghostPersona.connectStoryGlobalWallet",
         "title": "Ghost Persona: Connect Story Global Wallet"
+      },
+      {
+        "command": "ghostPersona.lockIntoVault",
+        "title": "Ghost Persona: Lock / Unlock CDR Vault"
       },
       {
         "command": "ghostPersona.getContextMarkdown",
@@ -132,10 +125,6 @@
       {
         "command": "ghostPersona.clearSessionLogs",
         "title": "Ghost Persona: Clear Session Logs"
-      },
-      {
-        "command": "ghostPersona.setPrivateKey",
-        "title": "Ghost Persona: Set Transaction Signing Private Key"
       }
     ],
     "viewsContainers": {

@@ -5,13 +5,13 @@ export class WorkspaceRecoveryManager {
     this.client = ghostClient.client;
   }
 
-  async recoverMasterKey(uuid: string): Promise<Uint8Array> {
+  async recoverMasterKey(uuid: string | number): Promise<Uint8Array> {
     const { consumer } = this.client;
 
     console.log(`[Story CDR] Querying active validators for threshold collection on Vault ${uuid}...`);
 
     const { dataKey, txHash } = await consumer.accessCDR({
-      uuid,
+      uuid: Number(uuid),
       accessAuxData: "0x",
       timeoutMs: 120_000
     });

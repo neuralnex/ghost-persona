@@ -31,21 +31,40 @@ export class GhostSidebarProvider implements vscode.WebviewViewProvider {
           vscode.commands.executeCommand('ghostPersona.connectStoryGlobalWallet');
           break;
         }
+        case 'triggerVaultLock': {
+          vscode.commands.executeCommand('ghostPersona.lockIntoVault');
+          break;
+        }
+        case 'triggerAppendPrompt': {
+          vscode.commands.executeCommand('ghostPersona.appendDynamicPrompt');
+          break;
+        }
+        case 'triggerClearLogs': {
+          vscode.commands.executeCommand('ghostPersona.clearSessionLogs');
+          break;
+        }
+        case 'triggerCopyContext': {
+          const contextMarkdown = await vscode.commands.executeCommand<string>('ghostPersona.getContextMarkdown');
+          await vscode.env.clipboard.writeText(contextMarkdown || '');
+          vscode.window.showInformationMessage('Ghost Persona context copied to clipboard.');
+          break;
+        }
       }
     });
   }
 
   public broadcastUpdate() {
-    if (this._view && activeContextMemory) {
+    if (this._view) {
       const config = vscode.workspace.getConfiguration('ghostPersona');
-      const savedWallet =config.get<string>('walletAddress', '');
+      const savedWallet = config.get<string>('walletAddress', '');
       this._view.webview.postMessage({
         type: 'updateState',
         payload: {
-          vaultUuid: activeContextMemory.vaultUuid || 'Local vault pending',
-          logs: activeContextMemory.sessionLogs || [],
-          prompts: activeContextMemory.dynamicPrompts || [],
-          isWalletConnected: savedWallet.length > 0
+          vaultUuid: activeContextMemory?.vaultUuid || 'Wallet connection required',
+          logs: activeContextMemory?.sessionLogs || [],
+          prompts: activeContextMemory?.dynamicPrompts || [],
+          isWalletConnected: savedWallet.length > 0,
+          isVaultActive: Boolean(activeContextMemory?.vaultUuid)
         }
       });
     }
@@ -102,8 +121,26 @@ export class GhostSidebarProvider implements vscode.WebviewViewProvider {
             font: inherit;
             font-weight: 600;
           }
+          .actions {
+            display: grid;
+            gap: 8px;
+          }
+          button.secondary {
+            color: var(--vscode-button-secondaryForeground);
+            background: var(--vscode-button-secondaryBackground);
+          }
+          button.secondary:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+          }
           button:hover {
             background: var(--vscode-button-hoverBackground);
+          }
+          button:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+          }
+          button:disabled:hover {
+            background: var(--vscode-button-background);
           }
           .mono {
             font-family: var(--vscode-editor-font-family);
@@ -148,6 +185,15 @@ export class GhostSidebarProvider implements vscode.WebviewViewProvider {
             <button id="authButton" type="button">Connect Story Global Wallet</button>
             <div id="authStatus" class="status" hidden>Story Global Wallet identity connected</div>
           </section>
+          <section class="panel">
+            <p class="label">Workspace Vault Controls</p>
+            <div class="actions">
+              <button id="vaultButton" type="button">Lock / Unlock CDR Vault</button>
+              <button id="copyContextButton" class="secondary" type="button">Copy Context Markdown</button>
+              <button id="appendPromptButton" class="secondary" type="button">Append Dynamic Prompt</button>
+              <button id="clearLogsButton" class="secondary" type="button">Clear Session Logs</button>
+            </div>
+          </section>
           <section>
             <p class="label">Active Storage Vault Link</p>
             <div id="vault" class="vault mono">Locked</div>
@@ -165,9 +211,25 @@ export class GhostSidebarProvider implements vscode.WebviewViewProvider {
           const logs = document.getElementById('logs');
           const authButton = document.getElementById('authButton');
           const authStatus = document.getElementById('authStatus');
+          const vaultButton = document.getElementById('vaultButton');
+          const copyContextButton = document.getElementById('copyContextButton');
+          const appendPromptButton = document.getElementById('appendPromptButton');
+          const clearLogsButton = document.getElementById('clearLogsButton');
 
           authButton.addEventListener('click', () => {
             vscode.postMessage({ type: 'triggerAuth' });
+          });
+          vaultButton.addEventListener('click', () => {
+            vscode.postMessage({ type: 'triggerVaultLock' });
+          });
+          copyContextButton.addEventListener('click', () => {
+            vscode.postMessage({ type: 'triggerCopyContext' });
+          });
+          appendPromptButton.addEventListener('click', () => {
+            vscode.postMessage({ type: 'triggerAppendPrompt' });
+          });
+          clearLogsButton.addEventListener('click', () => {
+            vscode.postMessage({ type: 'triggerClearLogs' });
           });
 
           window.addEventListener('message', event => {
@@ -180,10 +242,16 @@ export class GhostSidebarProvider implements vscode.WebviewViewProvider {
             if (message.payload.isWalletConnected) {
               authButton.hidden = true;
               authStatus.hidden = false;
+              vaultButton.disabled = false;
             } else {
               authButton.hidden = false;
               authStatus.hidden = true;
+              vaultButton.disabled = true;
             }
+
+            copyContextButton.disabled = !message.payload.isVaultActive;
+            appendPromptButton.disabled = !message.payload.isVaultActive;
+            clearLogsButton.disabled = !message.payload.isVaultActive;
 
             if (!message.payload.logs || message.payload.logs.length === 0) {
               const empty = document.createElement('div');
