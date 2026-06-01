@@ -1,6 +1,6 @@
 # Ghost Persona
 
-Local-first workspace memory for IDE agents.
+Local-first workspace memory for IDE agents (Open Source).
 
 Ghost Persona records workspace mutations, stores the context in an AES-256-GCM encrypted `.ghost` vault, and exposes chat-router commands that IDE agents can call before sending messages to an LLM.
 
@@ -8,7 +8,6 @@ Ghost Persona records workspace mutations, stores the context in an AES-256-GCM 
 
 - [Story Docs](https://docs.story.foundation/introduction): Story Network, wallet, and protocol background.
 - [CDR.md](./CDR.md): how Ghost Persona uses Story Confidential Data Rail.
-- [DEPLOYMENT.md](./DEPLOYMENT.md): deployment and end-to-end testing guide.
 - [.env.example](./.env.example): local environment template.
 
 ## Wallet Identity
