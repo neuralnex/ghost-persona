@@ -10,6 +10,53 @@ Ghost Persona records workspace mutations, stores the context in an AES-256-GCM 
 - [CDR.md](./CDR.md): how Ghost Persona uses Story Confidential Data Rail.
 - [.env.example](./.env.example): local environment template.
 
+## Install From GitHub Release
+
+Ghost Persona can be installed from the release `.vsix` file without publishing to a marketplace.
+
+1. Download [Ghost Persona](https://github.com/neuralnex/ghost-persona/releases/download/v1.0.3/ghost-persona-1.0.3.vsix).
+3. Install it in your editor using one of the methods below.
+
+### VS Code
+
+From the UI:
+
+1. Open Extensions.
+2. Select the `...` menu.
+3. Choose `Install from VSIX...`.
+4. Pick the downloaded `ghost-persona-<version>.vsix` file.
+
+From the terminal:
+
+```sh
+code --install-extension ghost-persona-1.0.3.vsix --force
+```
+
+### Cursor
+
+From the UI:
+
+1. Open Extensions.
+2. Select the `...` menu.
+3. Choose `Install from VSIX...`.
+4. Pick the downloaded `ghost-persona-<version>.vsix` file.
+
+From the terminal:
+
+```sh
+cursor --install-extension ghost-persona-1.0.3.vsix --force
+```
+
+### Other VS Code-Compatible IDEs
+
+Most VS Code-compatible editors support VSIX installation from the Extensions view. If the editor exposes a CLI compatible with VS Code, use:
+
+```sh
+<editor-command> --install-extension ghost-persona-1.0.3.vsix --force
+```
+
+After installation, reload the editor and open the Ghost Persona Activity Bar view.
+
 ## Wallet Identity
 
 Ghost Persona uses Story Global Wallet for user identity and CDR transaction signing. Users authenticate through a companion web app, sign a nonce, and return the verified wallet address to the VS Code extension. When CDR needs an on-chain transaction, the extension opens the companion again so the connected wallet can review, sign, and pay directly. Ghost Persona stores only the public address and signature-verified session metadata; it never stores wallet private keys.
