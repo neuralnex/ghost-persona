@@ -78,6 +78,10 @@ export async function activate(context: vscode.ExtensionContext) {
     sidebarProvider?.broadcastUpdate();
   });
 
+  const openGuideCommand = vscode.commands.registerCommand('ghostPersona.openGuide', () => {
+    showGhostPersonaGuide(context);
+  });
+
   const connectStoryWalletCommand = vscode.commands.registerCommand('ghostPersona.connectStoryGlobalWallet', async () => {
     const config = vscode.workspace.getConfiguration('ghostPersona');
     const globalWalletUrl = config.get<string>('globalWalletUrl');
@@ -150,12 +154,123 @@ export async function activate(context: vscode.ExtensionContext) {
     contextCommand,
     appendPromptCommand,
     clearLogsCommand,
+    openGuideCommand,
     connectStoryWalletCommand,
     lockIntoVaultCommand,
     uriHandler
   );
 
   sidebarProvider.broadcastUpdate();
+}
+
+function showGhostPersonaGuide(context: vscode.ExtensionContext): void {
+  const panel = vscode.window.createWebviewPanel(
+    'ghostPersonaGuide',
+    'Ghost Persona Guide',
+    vscode.ViewColumn.One,
+    {
+      enableScripts: false,
+      localResourceRoots: [context.extensionUri]
+    }
+  );
+
+  panel.webview.html = `<!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';">
+      <title>Ghost Persona Guide</title>
+      <style>
+        body {
+          margin: 0;
+          color: var(--vscode-foreground);
+          background: var(--vscode-editor-background);
+          font-family: var(--vscode-font-family);
+          line-height: 1.5;
+        }
+        main {
+          max-width: 820px;
+          padding: 28px;
+        }
+        h1 {
+          margin: 0 0 8px;
+          font-size: 26px;
+          font-weight: 700;
+        }
+        h2 {
+          margin: 28px 0 10px;
+          font-size: 16px;
+          font-weight: 700;
+        }
+        p, li {
+          color: var(--vscode-descriptionForeground);
+          font-size: 13px;
+        }
+        .grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 10px;
+          margin-top: 14px;
+        }
+        .card {
+          border: 1px solid var(--vscode-panel-border);
+          border-radius: 6px;
+          padding: 12px;
+          background: var(--vscode-sideBar-background);
+        }
+        .card strong {
+          display: block;
+          margin-bottom: 6px;
+          color: var(--vscode-foreground);
+        }
+        code {
+          color: var(--vscode-textPreformat-foreground);
+          background: var(--vscode-textCodeBlock-background);
+          border-radius: 4px;
+          padding: 1px 4px;
+          font-family: var(--vscode-editor-font-family);
+        }
+      </style>
+    </head>
+    <body>
+      <main>
+        <h1>Ghost Persona</h1>
+        <p>Encrypted workspace memory for IDE agents, backed by Story Global Wallet identity and CDR key recovery.</p>
+
+        <h2>First Run</h2>
+        <div class="grid">
+          <div class="card">
+            <strong>1. Connect Wallet</strong>
+            <p>Run <code>Ghost Persona: Connect Story Global Wallet</code>. This verifies your public wallet address with a nonce signature. No CDR gas fee is charged here.</p>
+          </div>
+          <div class="card">
+            <strong>2. Lock Vault</strong>
+            <p>Run <code>Ghost Persona: Lock / Unlock CDR Vault</code>. On a new workspace, this asks your wallet to pay required Story/CDR network fees to allocate the vault and write the encrypted workspace key.</p>
+          </div>
+          <div class="card">
+            <strong>3. Work Normally</strong>
+            <p>File changes, prompts, logs, and context updates are encrypted locally in <code>.ghost/context.bin.enc</code>. They do not trigger wallet charges.</p>
+          </div>
+        </div>
+
+        <h2>Unlocking</h2>
+        <p>If a workspace already has a vault UUID in <code>.ghost/config.json</code>, <code>Lock / Unlock CDR Vault</code> recovers the AES workspace key through CDR so the local encrypted context can be decrypted.</p>
+
+        <h2>Commands</h2>
+        <ul>
+          <li><code>Connect Story Global Wallet</code>: verify wallet identity only.</li>
+          <li><code>Lock / Unlock CDR Vault</code>: create or recover the CDR-protected workspace key.</li>
+          <li><code>Copy Context Markdown</code>: copy current context for agents or debugging.</li>
+          <li><code>Append Dynamic Prompt</code>: add a persistent encrypted local instruction.</li>
+          <li><code>Clear Session Logs</code>: clear encrypted local file mutation history.</li>
+        </ul>
+
+        <h2>Billing</h2>
+        <p>The wallet pays only required Story/CDR network fees for vault lifecycle transactions. Ghost Persona does not charge on every edit.</p>
+      </main>
+    </body>
+    </html>`;
 }
 
 async function initializeProductionRuntime(workspaceRoot: string, identityStore: GhostIdentityStore): Promise<void> {

@@ -11,4 +11,7 @@ sdk/**
 bin/**
 tsconfig.json
 package-lock.json
+README.md
+CDR.md
+DEPLOYMENT.md
 HOSTING_AND_ROADMAP.md

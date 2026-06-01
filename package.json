@@ -14,6 +14,7 @@
   "activationEvents": [
     "onCommand:ghostPersona.connectStoryGlobalWallet",
     "onCommand:ghostPersona.lockIntoVault",
+    "onCommand:ghostPersona.openGuide",
     "onCommand:ghostPersona.getContextMarkdown",
     "onCommand:ghostPersona.getInjectedChatPipeline",
     "onCommand:ghostPersona.appendDynamicPrompt",
@@ -109,6 +110,10 @@
       {
         "command": "ghostPersona.lockIntoVault",
         "title": "Ghost Persona: Lock / Unlock CDR Vault"
+      },
+      {
+        "command": "ghostPersona.openGuide",
+        "title": "Ghost Persona: Open Guide"
       },
       {
         "command": "ghostPersona.getContextMarkdown",

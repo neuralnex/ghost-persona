@@ -35,6 +35,10 @@ export class GhostSidebarProvider implements vscode.WebviewViewProvider {
           vscode.commands.executeCommand('ghostPersona.lockIntoVault');
           break;
         }
+        case 'triggerGuide': {
+          vscode.commands.executeCommand('ghostPersona.openGuide');
+          break;
+        }
         case 'triggerAppendPrompt': {
           vscode.commands.executeCommand('ghostPersona.appendDynamicPrompt');
           break;
@@ -189,6 +193,7 @@ export class GhostSidebarProvider implements vscode.WebviewViewProvider {
             <p class="label">Workspace Vault Controls</p>
             <div class="actions">
               <button id="vaultButton" type="button">Lock / Unlock CDR Vault</button>
+              <button id="guideButton" class="secondary" type="button">Open Guide</button>
               <button id="copyContextButton" class="secondary" type="button">Copy Context Markdown</button>
               <button id="appendPromptButton" class="secondary" type="button">Append Dynamic Prompt</button>
               <button id="clearLogsButton" class="secondary" type="button">Clear Session Logs</button>
@@ -212,6 +217,7 @@ export class GhostSidebarProvider implements vscode.WebviewViewProvider {
           const authButton = document.getElementById('authButton');
           const authStatus = document.getElementById('authStatus');
           const vaultButton = document.getElementById('vaultButton');
+          const guideButton = document.getElementById('guideButton');
           const copyContextButton = document.getElementById('copyContextButton');
           const appendPromptButton = document.getElementById('appendPromptButton');
           const clearLogsButton = document.getElementById('clearLogsButton');
@@ -221,6 +227,9 @@ export class GhostSidebarProvider implements vscode.WebviewViewProvider {
           });
           vaultButton.addEventListener('click', () => {
             vscode.postMessage({ type: 'triggerVaultLock' });
+          });
+          guideButton.addEventListener('click', () => {
+            vscode.postMessage({ type: 'triggerGuide' });
           });
           copyContextButton.addEventListener('click', () => {
             vscode.postMessage({ type: 'triggerCopyContext' });
