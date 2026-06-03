@@ -19,7 +19,9 @@ The encrypted local payload contains:
 
 ## CDR Vault Provisioning
 
-When live mode is enabled, `PrivateWorkspaceManager.provisionWorkspaceVault()` allocates a CDR vault.
+When live mode is enabled, `PrivateWorkspaceManager.provisionWorkspaceVault()` allocates a CDR vault during the first-time Lock flow.
+
+Before the extension asks the wallet to allocate a vault, `GhostCDRClient.validateDkgEndpoint()` verifies that `ghostPersona.cdrApiUrl` can serve the CDR DKG global public key. This prevents a misconfigured Story-API REST endpoint from failing only after the first wallet-paid vault transaction.
 
 The vault is configured with:
 
@@ -43,11 +45,15 @@ The flow is:
 
 Only the threshold-wrapped data key is committed to CDR.
 
+For Aeneid testnet, the default Story-API REST endpoint is `http://172.192.41.96:1317`. The RPC URL remains separate and defaults to `https://aeneid.storyrpc.io`.
+
 ## Workspace Recovery
 
 On restart, `WorkspaceRecoveryManager.recoverMasterKey()` calls `consumer.accessCDR()`.
 
 If access conditions are satisfied, CDR reconstructs the data key and returns the AES master key to the local runtime. The extension then decrypts `.ghost/context.bin.enc` locally.
+
+Use Lock only when the workspace does not yet have `.ghost/config.json`. Use Unlock when `.ghost/config.json` already contains a vault UUID and the workspace key needs to be recovered.
 
 ## Identity Model
 

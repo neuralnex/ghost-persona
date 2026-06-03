@@ -69,6 +69,15 @@ Configure the companion app URL in workspace settings:
 }
 ```
 
+Configure CDR separately from the EVM RPC endpoint. On Aeneid testnet, `ghostPersona.rpcUrl` is used for on-chain reads and writes, while `ghostPersona.cdrApiUrl` is the Story-API REST endpoint used for DKG state such as the global public key:
+
+```json
+{
+  "ghostPersona.rpcUrl": "https://aeneid.storyrpc.io",
+  "ghostPersona.cdrApiUrl": "http://172.192.41.96:1317"
+}
+```
+
 The companion app should import Story Global Wallet in its root client component:
 
 ```tsx
@@ -103,12 +112,20 @@ This command does not create a CDR vault and does not submit a fee-bearing CDR t
 Ghost Persona: Connect Story Global Wallet
 ```
 
-### `Ghost Persona: Lock / Unlock CDR Vault`
+### `Ghost Persona: Lock CDR Vault`
 
-Starts the production CDR lifecycle for the workspace. On a new workspace, it creates a local AES key, asks the connected wallet to allocate a CDR vault, and asks the wallet to write the threshold-encrypted AES key to that vault. On an existing workspace, it asks the wallet to perform CDR recovery so the local encrypted context can be decrypted.
+Use this once for a new workspace. It creates a local AES key, asks the connected wallet to allocate a CDR vault, and asks the wallet to write the threshold-encrypted AES key to that vault.
 
 ```text
-Ghost Persona: Lock / Unlock CDR Vault
+Ghost Persona: Lock CDR Vault
+```
+
+### `Ghost Persona: Unlock CDR Vault`
+
+Use this when returning to a workspace that already has `.ghost/config.json` with a vault UUID. It asks the wallet to perform CDR recovery so the local encrypted context can be decrypted.
+
+```text
+Ghost Persona: Unlock CDR Vault
 ```
 
 ### `Ghost Persona: Get Context Markdown`
@@ -132,7 +149,8 @@ Clears recorded file mutation logs from the encrypted local context. This update
 The Ghost Persona Activity Bar view exposes the main workflow:
 
 - `Connect Story Global Wallet`: authenticate wallet identity.
-- `Lock / Unlock CDR Vault`: trigger the wallet-paid CDR vault lifecycle.
+- `Lock CDR Vault`: create a new CDR vault for this workspace.
+- `Unlock CDR Vault`: recover an existing CDR vault for this workspace.
 - `Copy Context Markdown`: copy current context to clipboard.
 - `Append Dynamic Prompt`: add a persistent prompt instruction.
 - `Clear Session Logs`: remove local mutation logs from the encrypted context.
@@ -158,4 +176,5 @@ The VS Code extension contributes these commands:
 - `ghostPersona.appendDynamicPrompt`
 - `ghostPersona.clearSessionLogs`
 - `ghostPersona.connectStoryGlobalWallet`
-- `ghostPersona.lockIntoVault`
+- `ghostPersona.lockVault`
+- `ghostPersona.unlockVault`

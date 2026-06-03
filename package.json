@@ -14,6 +14,8 @@
   "activationEvents": [
     "onCommand:ghostPersona.connectStoryGlobalWallet",
     "onCommand:ghostPersona.lockIntoVault",
+    "onCommand:ghostPersona.lockVault",
+    "onCommand:ghostPersona.unlockVault",
     "onCommand:ghostPersona.openGuide",
     "onCommand:ghostPersona.getContextMarkdown",
     "onCommand:ghostPersona.getInjectedChatPipeline",
@@ -87,8 +89,8 @@
         },
         "ghostPersona.cdrApiUrl": {
           "type": "string",
-          "default": "https://staging-api.storyprotocol.net/api/v4",
-          "description": "CDR API endpoint used when live CDR mode is enabled."
+          "default": "http://172.192.41.96:1317",
+          "description": "Story-API REST endpoint used for CDR DKG state when live CDR mode is enabled."
         },
         "ghostPersona.globalWalletUrl": {
           "type": "string",
@@ -112,12 +114,20 @@
         "title": "Ghost Persona: Lock / Unlock CDR Vault"
       },
       {
+        "command": "ghostPersona.lockVault",
+        "title": "Ghost Persona: Lock CDR Vault"
+      },
+      {
+        "command": "ghostPersona.unlockVault",
+        "title": "Ghost Persona: Unlock CDR Vault"
+      },
+      {
         "command": "ghostPersona.openGuide",
         "title": "Ghost Persona: Open Guide"
       },
       {
         "command": "ghostPersona.getContextMarkdown",
-        "title": "Ghost Persona: Get Context Markdown"
+        "title": "Ghost Persona: Get JSON Context Prompt"
       },
       {
         "command": "ghostPersona.getInjectedChatPipeline",

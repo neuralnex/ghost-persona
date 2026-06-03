@@ -33,7 +33,17 @@ export class PrivateWorkspaceManager {
 
     console.log(`[Story CDR] Generating TDH2 threshold wrapper parameters...`);
 
-    const globalPubKey = await observer.getGlobalPubKey();
+    let globalPubKey;
+    try {
+      globalPubKey = await observer.getGlobalPubKey();
+    } catch (error: any) {
+      throw new Error(
+        `Unable to fetch CDR DKG global public key for TDH2 wrapping. ` +
+        `Check ghostPersona.cdrApiUrl / STORY_API_URL for the current Aeneid Story-API REST endpoint. ` +
+        `Original error: ${error?.message || error}`
+      );
+    }
+
     const numericUuid = Number(uuid);
     const label = uuidToLabel(numericUuid);
 

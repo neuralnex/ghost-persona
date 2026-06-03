@@ -6,6 +6,7 @@ import { GhostWorkspaceWatcher } from './watcher.js';
 import { GhostContextInjector } from './injector.js';
 import { GhostSidebarProvider } from './sidebar.js';
 import { GhostIdentityStore } from '../../sdk/src/identity.js';
+import { GhostStorageManager } from '../../sdk/src/storage.js';
 import { StoryWalletBridge } from './walletBridge.js';
 import { isAddress, verifyMessage } from 'viem';
 
@@ -149,6 +150,28 @@ export async function activate(context: vscode.ExtensionContext) {
     await initializeProductionRuntime(workspaceRoot, identityStore);
   });
 
+  const lockVaultCommand = vscode.commands.registerCommand('ghostPersona.lockVault', async () => {
+    const storage = new GhostStorageManager(workspaceRoot);
+    const meta = storage.readMetadata();
+    if (meta) {
+      vscode.window.showInformationMessage('This workspace already has a CDR vault. Use Unlock CDR Vault to recover it.');
+      return;
+    }
+
+    await initializeProductionRuntime(workspaceRoot, identityStore);
+  });
+
+  const unlockVaultCommand = vscode.commands.registerCommand('ghostPersona.unlockVault', async () => {
+    const storage = new GhostStorageManager(workspaceRoot);
+    const meta = storage.readMetadata();
+    if (!meta) {
+      vscode.window.showInformationMessage('No CDR vault metadata was found for this workspace. Use Lock CDR Vault first.');
+      return;
+    }
+
+    await initializeProductionRuntime(workspaceRoot, identityStore);
+  });
+
   context.subscriptions.push(
     injectCommand,
     contextCommand,
@@ -157,6 +180,8 @@ export async function activate(context: vscode.ExtensionContext) {
     openGuideCommand,
     connectStoryWalletCommand,
     lockIntoVaultCommand,
+    lockVaultCommand,
+    unlockVaultCommand,
     uriHandler
   );
 
@@ -246,7 +271,7 @@ function showGhostPersonaGuide(context: vscode.ExtensionContext): void {
           </div>
           <div class="card">
             <strong>2. Lock Vault</strong>
-            <p>Run <code>Ghost Persona: Lock / Unlock CDR Vault</code>. On a new workspace, this asks your wallet to pay required Story/CDR network fees to allocate the vault and write the encrypted workspace key.</p>
+            <p>Run <code>Ghost Persona: Lock CDR Vault</code> once for a new workspace. This asks your wallet to allocate the vault and write the encrypted workspace key.</p>
           </div>
           <div class="card">
             <strong>3. Work Normally</strong>
@@ -255,12 +280,13 @@ function showGhostPersonaGuide(context: vscode.ExtensionContext): void {
         </div>
 
         <h2>Unlocking</h2>
-        <p>If a workspace already has a vault UUID in <code>.ghost/config.json</code>, <code>Lock / Unlock CDR Vault</code> recovers the AES workspace key through CDR so the local encrypted context can be decrypted.</p>
+        <p>If a workspace already has a vault UUID in <code>.ghost/config.json</code>, run <code>Ghost Persona: Unlock CDR Vault</code>. Unlock recovers the AES workspace key through CDR so the local encrypted context can be decrypted.</p>
 
         <h2>Commands</h2>
         <ul>
           <li><code>Connect Story Global Wallet</code>: verify wallet identity only.</li>
-          <li><code>Lock / Unlock CDR Vault</code>: create or recover the CDR-protected workspace key.</li>
+          <li><code>Lock CDR Vault</code>: create a new CDR vault for this workspace.</li>
+          <li><code>Unlock CDR Vault</code>: recover an existing CDR vault for this workspace.</li>
           <li><code>Copy Context Markdown</code>: copy current context for agents or debugging.</li>
           <li><code>Append Dynamic Prompt</code>: add a persistent encrypted local instruction.</li>
           <li><code>Clear Session Logs</code>: clear encrypted local file mutation history.</li>
@@ -301,6 +327,7 @@ async function initializeProductionRuntime(workspaceRoot: string, identityStore:
     });
 
     await ghostClient.init();
+    await ghostClient.validateDkgEndpoint();
 
     orchestratorInstance = new WorkspaceOrchestrator(workspaceRoot, ghostClient);
     console.log(`[Ghost Persona] Running production CDR check-in pass for: ${workspaceRoot}`);

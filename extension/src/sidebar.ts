@@ -1,305 +1,227 @@
 import * as vscode from 'vscode';
-import { activeContextMemory } from './extension.js';
 
 export class GhostSidebarProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'ghostContextView';
-  private _view?: vscode.WebviewView;
+  private view?: vscode.WebviewView;
 
-  constructor(private readonly _extensionUri: vscode.Uri) {}
+  constructor(private readonly extensionUri: vscode.Uri) {}
 
-  public resolveWebviewView(
-    webviewView: vscode.WebviewView,
-    _context: vscode.WebviewViewResolveContext,
-    _token: vscode.CancellationToken
-  ) {
-    this._view = webviewView;
+  public resolveWebviewView(webviewView: vscode.WebviewView): void {
+    this.view = webviewView;
 
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this._extensionUri]
+      localResourceRoots: [this.extensionUri]
     };
 
-    webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
-
-    webviewView.webview.onDidReceiveMessage(async (data) => {
-      switch (data.type) {
-        case 'requestInit': {
-          this.broadcastUpdate();
+    webviewView.webview.html = this.getHtml(webviewView.webview);
+    webviewView.webview.onDidReceiveMessage(async (message) => {
+      switch (message.command) {
+        case 'connectWallet':
+          await vscode.commands.executeCommand('ghostPersona.connectStoryGlobalWallet');
+          break;
+        case 'lockVault':
+          await vscode.commands.executeCommand('ghostPersona.lockVault');
+          break;
+        case 'unlockVault':
+          await vscode.commands.executeCommand('ghostPersona.unlockVault');
+          break;
+        case 'copyContext': {
+          const markdown = await vscode.commands.executeCommand<string>('ghostPersona.getContextMarkdown');
+          if (markdown) {
+            await vscode.env.clipboard.writeText(markdown);
+            vscode.window.showInformationMessage('Ghost Persona context copied to clipboard.');
+          }
           break;
         }
-        case 'triggerAuth': {
-          vscode.commands.executeCommand('ghostPersona.connectStoryGlobalWallet');
+        case 'appendPrompt':
+          await vscode.commands.executeCommand('ghostPersona.appendDynamicPrompt');
           break;
-        }
-        case 'triggerVaultLock': {
-          vscode.commands.executeCommand('ghostPersona.lockIntoVault');
+        case 'clearLogs':
+          await vscode.commands.executeCommand('ghostPersona.clearSessionLogs');
           break;
-        }
-        case 'triggerGuide': {
-          vscode.commands.executeCommand('ghostPersona.openGuide');
+        case 'openGuide':
+          await vscode.commands.executeCommand('ghostPersona.openGuide');
           break;
-        }
-        case 'triggerAppendPrompt': {
-          vscode.commands.executeCommand('ghostPersona.appendDynamicPrompt');
-          break;
-        }
-        case 'triggerClearLogs': {
-          vscode.commands.executeCommand('ghostPersona.clearSessionLogs');
-          break;
-        }
-        case 'triggerCopyContext': {
-          const contextMarkdown = await vscode.commands.executeCommand<string>('ghostPersona.getContextMarkdown');
-          await vscode.env.clipboard.writeText(contextMarkdown || '');
-          vscode.window.showInformationMessage('Ghost Persona context copied to clipboard.');
-          break;
-        }
       }
     });
   }
 
-  public broadcastUpdate() {
-    if (this._view) {
-      const config = vscode.workspace.getConfiguration('ghostPersona');
-      const savedWallet = config.get<string>('walletAddress', '');
-      this._view.webview.postMessage({
-        type: 'updateState',
-        payload: {
-          vaultUuid: activeContextMemory?.vaultUuid || 'Wallet connection required',
-          logs: activeContextMemory?.sessionLogs || [],
-          prompts: activeContextMemory?.dynamicPrompts || [],
-          isWalletConnected: savedWallet.length > 0,
-          isVaultActive: Boolean(activeContextMemory?.vaultUuid)
-        }
-      });
-    }
+  public notifyIdentityLocked(): void {
+    this.broadcastUpdate();
   }
 
-  private _getHtmlForWebview(webview: vscode.Webview) {
-    const nonce = this._getNonce();
+  public broadcastUpdate(): void {
+    this.view?.webview.postMessage({ command: 'refresh' });
+  }
+
+  private getHtml(webview: vscode.Webview): string {
+    const nonce = getNonce();
+    const cspSource = webview.cspSource;
 
     return `<!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
-        <title>Ghost Persona UI</title>
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+        <title>Ghost Persona</title>
         <style>
           :root {
-            color-scheme: dark;
+            color-scheme: light dark;
           }
+
           body {
-            color: var(--vscode-foreground);
-            font-family: var(--vscode-font-family);
-            background: var(--vscode-sideBar-background);
             margin: 0;
+            color: var(--vscode-foreground);
+            background: var(--vscode-sideBar-background);
+            font-family: var(--vscode-font-family);
+            font-size: var(--vscode-font-size);
           }
-          .shell {
+
+          main {
+            padding: 14px;
             display: grid;
             gap: 14px;
-            padding: 14px;
-            font-size: 12px;
           }
-          .panel {
-            border: 1px solid var(--vscode-sideBarSectionHeader-border, var(--vscode-panel-border));
-            border-radius: 6px;
-            padding: 12px;
-            background: var(--vscode-sideBarSectionHeader-background);
-          }
-          .label {
-            color: var(--vscode-descriptionForeground);
-            font-size: 11px;
+
+          h1 {
+            margin: 0;
+            font-size: 16px;
             font-weight: 700;
-            letter-spacing: 0;
+          }
+
+          h2 {
             margin: 0 0 8px;
+            font-size: 12px;
+            font-weight: 700;
             text-transform: uppercase;
+            color: var(--vscode-descriptionForeground);
+            letter-spacing: 0;
           }
-          button {
-            width: 100%;
-            border: 1px solid var(--vscode-button-border, transparent);
+
+          p {
+            margin: 0;
+            line-height: 1.45;
+            color: var(--vscode-descriptionForeground);
+          }
+
+          code {
+            color: var(--vscode-textPreformat-foreground);
+            background: var(--vscode-textCodeBlock-background);
             border-radius: 4px;
-            padding: 7px 9px;
-            color: var(--vscode-button-foreground);
-            background: var(--vscode-button-background);
-            cursor: pointer;
-            font: inherit;
-            font-weight: 600;
+            padding: 1px 4px;
+            font-family: var(--vscode-editor-font-family);
           }
-          .actions {
+
+          section {
             display: grid;
             gap: 8px;
           }
+
+          button {
+            width: 100%;
+            min-height: 30px;
+            border: 1px solid var(--vscode-button-border, transparent);
+            border-radius: 4px;
+            color: var(--vscode-button-foreground);
+            background: var(--vscode-button-background);
+            font: inherit;
+            cursor: pointer;
+          }
+
+          button:hover {
+            background: var(--vscode-button-hoverBackground);
+          }
+
           button.secondary {
             color: var(--vscode-button-secondaryForeground);
             background: var(--vscode-button-secondaryBackground);
           }
+
           button.secondary:hover {
             background: var(--vscode-button-secondaryHoverBackground);
           }
-          button:hover {
-            background: var(--vscode-button-hoverBackground);
-          }
-          button:disabled {
-            cursor: not-allowed;
-            opacity: 0.55;
-          }
-          button:disabled:hover {
-            background: var(--vscode-button-background);
-          }
-          .mono {
-            font-family: var(--vscode-editor-font-family);
-            overflow-wrap: anywhere;
-          }
-          .vault {
-            border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
-            border-radius: 4px;
-            padding: 8px;
-            background: var(--vscode-input-background);
-            font-size: 10px;
-          }
-          .logs {
+
+          .actions,
+          .vault-actions {
             display: grid;
             gap: 6px;
-            max-height: 220px;
-            overflow: auto;
-            border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
-            border-radius: 4px;
-            padding: 8px;
-            background: var(--vscode-editor-background);
-            font-size: 10px;
           }
-          .empty {
-            color: var(--vscode-descriptionForeground);
-            font-style: italic;
+
+          .hint {
+            font-size: 12px;
           }
-          .log {
-            border-bottom: 1px solid var(--vscode-panel-border);
-            padding-bottom: 5px;
-          }
+
           .status {
-            color: var(--vscode-testing-iconPassed);
-            font-family: var(--vscode-editor-font-family);
+            padding: 8px;
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 6px;
+            background: var(--vscode-editor-background);
           }
         </style>
       </head>
       <body>
-        <main class="shell">
-          <section class="panel">
-            <p class="label">Identity Security Status</p>
-            <button id="authButton" type="button">Connect Story Global Wallet</button>
-            <div id="authStatus" class="status" hidden>Story Global Wallet identity connected</div>
+        <main>
+          <header>
+            <h1>Ghost Persona</h1>
+          </header>
+
+          <section class="status">
+            <h2>Vault Flow</h2>
+            <p>Lock is for first-time setup. Unlock is for returning to a workspace that already has a saved CDR vault.</p>
           </section>
-          <section class="panel">
-            <p class="label">Workspace Vault Controls</p>
+
+          <section>
+            <h2>Wallet</h2>
+            <button id="connectWalletButton" type="button">Connect Story Global Wallet</button>
+          </section>
+
+          <section>
+            <h2>CDR Vault</h2>
+            <div class="vault-actions">
+              <button id="lockVaultButton" type="button">Lock CDR Vault</button>
+              <button id="unlockVaultButton" class="secondary" type="button">Unlock CDR Vault</button>
+            </div>
+            <p class="hint">Use Lock once for a new workspace. Use Unlock when <code>.ghost/config.json</code> already exists and you need to recover the key.</p>
+          </section>
+
+          <section>
+            <h2>Context</h2>
             <div class="actions">
-              <button id="vaultButton" type="button">Lock / Unlock CDR Vault</button>
-              <button id="guideButton" class="secondary" type="button">Open Guide</button>
-              <button id="copyContextButton" class="secondary" type="button">Copy Context Markdown</button>
+              <button id="copyContextButton" class="secondary" type="button">Copy JSON Context Prompt</button>
               <button id="appendPromptButton" class="secondary" type="button">Append Dynamic Prompt</button>
               <button id="clearLogsButton" class="secondary" type="button">Clear Session Logs</button>
             </div>
           </section>
+
           <section>
-            <p class="label">Active Storage Vault Link</p>
-            <div id="vault" class="vault mono">Locked</div>
-          </section>
-          <section>
-            <p class="label">Live Flight Recorder Session Logs</p>
-            <div id="logs" class="logs mono">
-              <div class="empty">Awaiting directory file mutations...</div>
-            </div>
+            <button id="openGuideButton" class="secondary" type="button">Open Guide</button>
           </section>
         </main>
+
         <script nonce="${nonce}">
           const vscode = acquireVsCodeApi();
-          const vault = document.getElementById('vault');
-          const logs = document.getElementById('logs');
-          const authButton = document.getElementById('authButton');
-          const authStatus = document.getElementById('authStatus');
-          const vaultButton = document.getElementById('vaultButton');
-          const guideButton = document.getElementById('guideButton');
-          const copyContextButton = document.getElementById('copyContextButton');
-          const appendPromptButton = document.getElementById('appendPromptButton');
-          const clearLogsButton = document.getElementById('clearLogsButton');
+          const post = (command) => vscode.postMessage({ command });
 
-          authButton.addEventListener('click', () => {
-            vscode.postMessage({ type: 'triggerAuth' });
-          });
-          vaultButton.addEventListener('click', () => {
-            vscode.postMessage({ type: 'triggerVaultLock' });
-          });
-          guideButton.addEventListener('click', () => {
-            vscode.postMessage({ type: 'triggerGuide' });
-          });
-          copyContextButton.addEventListener('click', () => {
-            vscode.postMessage({ type: 'triggerCopyContext' });
-          });
-          appendPromptButton.addEventListener('click', () => {
-            vscode.postMessage({ type: 'triggerAppendPrompt' });
-          });
-          clearLogsButton.addEventListener('click', () => {
-            vscode.postMessage({ type: 'triggerClearLogs' });
-          });
-
-          window.addEventListener('message', event => {
-            const message = event.data;
-            if (message.type !== 'updateState') return;
-
-            vault.textContent = message.payload.vaultUuid || 'Locked';
-            logs.replaceChildren();
-
-            if (message.payload.isWalletConnected) {
-              authButton.hidden = true;
-              authStatus.hidden = false;
-              vaultButton.disabled = false;
-            } else {
-              authButton.hidden = false;
-              authStatus.hidden = true;
-              vaultButton.disabled = true;
-            }
-
-            copyContextButton.disabled = !message.payload.isVaultActive;
-            appendPromptButton.disabled = !message.payload.isVaultActive;
-            clearLogsButton.disabled = !message.payload.isVaultActive;
-
-            if (!message.payload.logs || message.payload.logs.length === 0) {
-              const empty = document.createElement('div');
-              empty.className = 'empty';
-              empty.textContent = 'Awaiting directory file mutations...';
-              logs.appendChild(empty);
-              return;
-            }
-
-            for (const item of message.payload.logs) {
-              const row = document.createElement('div');
-              row.className = 'log';
-              row.textContent = item;
-              logs.appendChild(row);
-            }
-          });
-
-          window.addEventListener('message', event => {
-            if (event.data.type !== 'identityLocked') return;
-            authButton.hidden = true;
-            authStatus.hidden = false;
-          });
-
-          vscode.postMessage({ type: 'requestInit' });
+          document.getElementById('connectWalletButton')?.addEventListener('click', () => post('connectWallet'));
+          document.getElementById('lockVaultButton')?.addEventListener('click', () => post('lockVault'));
+          document.getElementById('unlockVaultButton')?.addEventListener('click', () => post('unlockVault'));
+          document.getElementById('copyContextButton')?.addEventListener('click', () => post('copyContext'));
+          document.getElementById('appendPromptButton')?.addEventListener('click', () => post('appendPrompt'));
+          document.getElementById('clearLogsButton')?.addEventListener('click', () => post('clearLogs'));
+          document.getElementById('openGuideButton')?.addEventListener('click', () => post('openGuide'));
         </script>
       </body>
       </html>`;
   }
+}
 
-  public notifyIdentityLocked() {
-    this._view?.webview.postMessage({ type: 'identityLocked' });
+function getNonce(): string {
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let text = '';
+  for (let i = 0; i < 32; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
   }
-
-  private _getNonce() {
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let text = '';
-    for (let i = 0; i < 32; i++) {
-      text += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-    }
-    return text;
-  }
+  return text;
 }
