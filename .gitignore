@@ -8,9 +8,7 @@
 # testing
 /coverage
 
-# local Ghost Persona vaults
-/.ghost
-**/.ghost
+
 
 # next.js
 /.next/
